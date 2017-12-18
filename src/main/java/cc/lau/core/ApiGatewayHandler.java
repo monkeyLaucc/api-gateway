@@ -233,6 +233,6 @@ public class ApiGatewayHandler implements InitializingBean, ApplicationContextAw
      * @return
      */
     public List<ApiStore.APIDocument> getApiDocument(){
-        return apiStore.getApiDocument();
+        return apiStore.generateApiDocument();
     }
 }

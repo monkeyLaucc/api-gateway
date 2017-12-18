@@ -78,11 +78,11 @@ public class ApiStore {
     }
 
     /**
-     * 获取api文档
+     * 生成api文档
      *
      * @return
      */
-    public List<APIDocument> getApiDocument() {
+    public List<APIDocument> generateApiDocument() {
         ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
         List<APIDocument> list = new ArrayList<>();
         for (ApiStore.APIRunnable api : apiMap.values()) {
