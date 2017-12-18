@@ -14,8 +14,8 @@ public class testMap {
         objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
         objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
 
-        String json = "{\"student\":{\"id\":1,\"name\":\"cccc\"}}";
-        Student student = JsonTool.convertValue(JsonTool.toMap(json), Student.class);
+        String json = "{\"id\":1,\"name\":\"cccc\"}";
+        Student student = JsonTool.convertValue(json, Student.class);
 //        Student student = JsonTool.toObject(Student.class,json);
         System.out.println(student.toString());
     }

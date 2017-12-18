@@ -1,5 +1,7 @@
 package cc.lau.core;
 
+import org.apache.commons.lang3.StringUtils;
+import org.hibernate.validator.internal.engine.ConstraintViolationImpl;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
@@ -10,6 +12,10 @@ import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -50,13 +56,12 @@ public class ApiGatewayHandler implements InitializingBean, ApplicationContextAw
      */
     public void handle(HttpServletRequest request, HttpServletResponse response) {
         //系统参数验证
-        String method = request.getParameter(METHOD);
         String params = request.getParameter(PARAMS);
         Object result = null;
         ApiStore.APIRunnable apiRunnable = null;
         try {
             apiRunnable = sysParamsValidate(request);
-            Object[] args = buildParams(apiRunnable, params, request, response);
+            Object[] args = buildParams(apiRunnable, params, request);
             result = apiRunnable.run(args);
         } catch (ApiException e) {
             e.printStackTrace();
@@ -76,16 +81,10 @@ public class ApiGatewayHandler implements InitializingBean, ApplicationContextAw
      * @return
      */
     public Object handleException(Throwable throwable) {
-        Map<String,Object> map = new HashMap<>();
-        if(throwable instanceof ApiException){
-            map.put("errorCode","40000");
-            map.put("msg",throwable.getMessage());
+        Map<String, Object> map = new HashMap<>();
+            map.put("code", "50000");
+            map.put("msg", throwable.getMessage());
             return map;
-        }else {
-            map.put("errorCode","50000");
-            map.put("msg",throwable.getMessage());
-            return map;
-        }
     }
 
 
@@ -116,10 +115,9 @@ public class ApiGatewayHandler implements InitializingBean, ApplicationContextAw
      * @param run
      * @param paramJson
      * @param request
-     * @param response
      * @return
      */
-    private Object[] buildParams(ApiStore.APIRunnable run, String paramJson, HttpServletRequest request, HttpServletResponse response) {
+    private Object[] buildParams(ApiStore.APIRunnable run, String paramJson, HttpServletRequest request) {
         Map<String, Object> map = null;
         map = JsonTool.toMap(paramJson);
         if (map == null) {
@@ -151,7 +149,7 @@ public class ApiGatewayHandler implements InitializingBean, ApplicationContextAw
     }
 
     /**
-     * 将MAP转换成具体的方法参数对象
+     * 转换为方法参数对象
      *
      * @param val
      * @param targetClass
@@ -180,7 +178,29 @@ public class ApiGatewayHandler implements InitializingBean, ApplicationContextAw
             }
         } else {
             //对象类型的转换
-            result = JsonTool.convertValue(JsonTool.toJson(val),targetClass);
+            result = JsonTool.toObject(targetClass,JsonTool.toJson(val));
+            //json转对象失败
+            if(result == null){
+                try {
+                    throw new IllegalArgumentException("参数对象转换失败："+JsonTool.toJson(val)+"无法转换成:"+targetClass.getName()+"对象，正确的json格式为："+JsonTool.toJson(targetClass.newInstance()));
+                } catch (InstantiationException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+            //校验参数对象
+            ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+            Validator validator = factory.getValidator();
+            Set<ConstraintViolation<Object>> violations = validator.validate(result);
+            ConstraintViolationImpl constraintViolation;
+            if (violations.size() > 0) {
+                constraintViolation = (ConstraintViolationImpl) violations.iterator().next();
+                String className = StringUtils.uncapitalize(constraintViolation.getRootBeanClass().getSimpleName());
+                String fieldName = constraintViolation.getPropertyPath().toString();
+                String msg = String.join(".", className, fieldName);
+                throw new IllegalArgumentException(msg+"校验不通过");
+            }
         }
         return result;
     }
@@ -205,5 +225,14 @@ public class ApiGatewayHandler implements InitializingBean, ApplicationContextAw
                 e.printStackTrace();
             }
         }
+    }
+
+
+    /**
+     * 获取api文档
+     * @return
+     */
+    public List<ApiStore.APIDocument> getApiDocument(){
+        return apiStore.getApiDocument();
     }
 }

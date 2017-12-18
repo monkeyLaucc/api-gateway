@@ -16,6 +16,7 @@
     </param-value>
   </context-param>
 
+  <!--API网关-->
   <servlet>
     <servlet-name>api-dispatcher</servlet-name>
     <servlet-class>cc.lau.core.ApiGatewayServlet</servlet-class>
@@ -25,6 +26,18 @@
   <servlet-mapping>
     <servlet-name>api-dispatcher</servlet-name>
     <url-pattern>/api</url-pattern>
+  </servlet-mapping>
+
+  <!--API文档-->
+  <servlet>
+    <servlet-name>api-doc</servlet-name>
+    <servlet-class>cc.lau.core.ApiDocumentServlet</servlet-class>
+    <load-on-startup>2</load-on-startup>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>api-doc</servlet-name>
+    <url-pattern>/document</url-pattern>
   </servlet-mapping>
 
 
