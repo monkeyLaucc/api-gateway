@@ -1,13 +1,14 @@
 package cc.lau.service.impl;
 
+import cc.lau.core.Api;
 import cc.lau.core.ApiMapping;
-import cc.lau.core.ApiStore;
 import cc.lau.entity.Student;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
 
+@Api("用来分类的")
 @Service
 public class StudentServiceImpl {
 
